@@ -1,0 +1,28 @@
+{
+    "product": "EasyDL", 
+    "channelOrder": "CHW", 
+    "means": [
+        104, 
+        117, 
+        124
+    ], 
+    "labels": [
+        "[default]", 
+        "safetyhat", 
+        "people", 
+        "blue", 
+        "White", 
+        "yellow", 
+        "orange", 
+        "Nosafetyhelmet", 
+        "red"
+    ], 
+    "mid": 1506, 
+    "height": 300, 
+    "param_file_asset_path": "infer-detect/params.enc", 
+    "width": 300, 
+    "scale": 1.0, 
+    "model_file_asset_path": "infer-detect/model", 
+    "rid": 5835, 
+    "colorFormat": "RGB"
+}
