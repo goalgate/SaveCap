@@ -8,11 +8,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import com.baidu.ai.edge.core.util.FileUtil;
 
@@ -23,7 +25,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class BaseActivity extends Activity {
+
+
+public class BaseActivity extends AppCompatActivity {
     private Button startUIActivityBtn;
     private String name = "";
     private String version = "";
@@ -83,12 +87,7 @@ public class BaseActivity extends Activity {
                     Log.i(this.getClass().getSimpleName(), "socList:" + socList.toString()
                             + ", Build.HARDWARE is :" + Build.HARDWARE + "soc:" + soc);
                     if (checkChip) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                startUICameraActivity();
-                            }
-                        }).start();
+                        startUICameraActivity();
                     } else {
                         Toast.makeText(getApplicationContext(), "socList:" + socList.toString()
                                         + ", Build.HARDWARE is :" + Build.HARDWARE,
@@ -160,5 +159,4 @@ public class BaseActivity extends Activity {
             e.printStackTrace();
         }
     }
-
 }

@@ -195,14 +195,11 @@ public class CameraProxy1 implements ICameraProxy {
         }
         previewSize.height = size.height;
         if (isBack) {
-            cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+//            cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         }
         cameraParameters.setPreviewSize(size.width, size.height);
         mCamera.setDisplayOrientation(previewRotation);
-        cameraParameters.setPictureFormat(ImageFormat.JPEG);
-        cameraParameters.set("jpeg-quality", 100);
         mCamera.setParameters(cameraParameters);
-
         status = STATUS_OPENED;
         if (mCameraListener != null) {
             mCameraListener.onSwitchCamera();

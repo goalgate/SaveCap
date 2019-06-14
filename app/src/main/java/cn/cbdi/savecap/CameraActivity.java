@@ -32,6 +32,7 @@ import com.baidu.ai.edge.ui.activity.ResultListener;
 import com.baidu.ai.edge.ui.view.model.ClassifyResultModel;
 import com.baidu.ai.edge.ui.view.model.DetectResultModel;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +43,7 @@ import java.util.List;
 public class CameraActivity extends MainActivity {
 
     // 请替换为您的序列号
-    private static final String SERIAL_NUM = "496B-9480-B111-35EF";
+    private static final String SERIAL_NUM = "A9C2-6117-6712-073F";
 
     ClassifyInterface mClassifyDLManager;
     ClassifyInterface mOnlineClassify;
@@ -398,3 +399,5 @@ public class CameraActivity extends MainActivity {
         }
     }
 }
+
+

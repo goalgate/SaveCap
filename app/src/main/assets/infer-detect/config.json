@@ -17,12 +17,12 @@
         "Nosafetyhelmet", 
         "red"
     ], 
-    "mid": 1506, 
+    "mid": 1576, 
     "height": 300, 
     "param_file_asset_path": "infer-detect/params.enc", 
     "width": 300, 
     "scale": 1.0, 
     "model_file_asset_path": "infer-detect/model", 
-    "rid": 5835, 
+    "rid": 6178, 
     "colorFormat": "RGB"
 }
