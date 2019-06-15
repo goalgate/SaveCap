@@ -18,6 +18,8 @@ public interface IPhotoModule {
 
     void Init(SurfaceView surfaceView, IOnSetListener listener);
 
+    void Init(SurfaceView surfaceView, SurfaceView drawRectView, IOnSetListener listener);
+
     void setDisplay(SurfaceHolder sHolder);
 
     void capture();
@@ -28,7 +30,7 @@ public interface IPhotoModule {
 
 
     interface IOnSetListener {
-        void onPhotoBack(String msg,Bitmap bitmap);
+        void onPhotoBack(String msg, Bitmap bitmap);
 
     }
 

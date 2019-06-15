@@ -42,7 +42,7 @@ public class PhotoPresenter {
 
     public void init(SurfaceView surfaceView) {
         try {
-            photoModule.Init(surfaceView, new IPhotoModule.IOnSetListener() {
+            photoModule.Init(surfaceView,new IPhotoModule.IOnSetListener() {
                         @Override
                         public void onPhotoBack(String msg, Bitmap bitmap) {
                             view.onPhotoBack(msg, bitmap);
@@ -54,6 +54,19 @@ public class PhotoPresenter {
         }
     }
 
+    public void init(SurfaceView surfaceView,SurfaceView drawRectView) {
+        try {
+            photoModule.Init(surfaceView,drawRectView, new IPhotoModule.IOnSetListener() {
+                        @Override
+                        public void onPhotoBack(String msg, Bitmap bitmap) {
+                            view.onPhotoBack(msg, bitmap);
+                        }
+                    }
+            );
+        } catch (NullPointerException e) {
+            Log.e("initCamera", e.toString());
+        }
+    }
 
     public void setMoelStatus(boolean status, int detectOrClassify, ClassifyInterface mClassifyDLManager, InferInterface mInferManager){
         photoModule.modelPrepare(status,detectOrClassify,mClassifyDLManager,mInferManager);

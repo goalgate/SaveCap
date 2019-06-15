@@ -108,6 +108,7 @@ public class SplashActivity extends Activity {
 
         intent.putExtra("soc", soc);
         startActivityForResult(intent, 1);
+        this.finish();
     }
 
 

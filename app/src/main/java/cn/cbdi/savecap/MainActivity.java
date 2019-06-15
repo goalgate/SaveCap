@@ -64,6 +64,9 @@ public class MainActivity extends Activity implements IPhotoView {
     @BindView(R.id.surfaceView)
     SurfaceView surfaceView;
 
+    @BindView(R.id.TransparentView)
+    SurfaceView surfaceViewForDrawing;
+
     PhotoPresenter pp = PhotoPresenter.getInstance();
 
     @Override
@@ -72,8 +75,7 @@ public class MainActivity extends Activity implements IPhotoView {
         setContentView(R.layout.activity_main_test);
         ButterKnife.bind(this);
         model = getIntent().getIntExtra("model_type", MODEL_DETECT);
-
-        pp.init(surfaceView);
+        pp.init(surfaceView,surfaceViewForDrawing);
         onActivityCreate();
     }
 
