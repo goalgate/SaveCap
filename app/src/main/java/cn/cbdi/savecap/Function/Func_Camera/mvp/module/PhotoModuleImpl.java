@@ -18,6 +18,8 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Surface;
@@ -61,7 +63,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import cn.cbdi.savecap.AppInit;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
+import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
@@ -71,6 +75,7 @@ import static com.baidu.ai.edge.ui.activity.MainActivity.MODEL_DETECT;
 
 public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
     final static String ApplicationName = PhotoModuleImpl.class.getSimpleName();
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     boolean modelLoadStatus = false;
     float mConfidence = (float) 0.30;
@@ -82,6 +87,8 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
     SurfaceHolder cameraHolder;
 
     SurfaceHolder drawRectHolder;
+
+    ImageView drawView;
 
     Camera camera;
 
@@ -111,6 +118,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
     @Override
     public void Init(SurfaceView surfaceView, IOnSetListener listener) {
         this.callback = listener;
+        this.cameraHolder = surfaceView.getHolder();
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -161,6 +169,33 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         drawRectView.setZOrderMediaOverlay(true);
     }
 
+
+    @Override
+    public void Init(SurfaceView surfaceView, ImageView drawView, IOnSetListener listener) {
+        this.callback = listener;
+        this.cameraHolder = surfaceView.getHolder();
+        this.drawView = drawView;
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                safeCameraOpen(1);
+                setCameraParemeter();
+                setDisplay(surfaceHolder);
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+                releaseCamera();
+
+            }
+        });
+    }
+
     @Override
     public void setDisplay(SurfaceHolder sHolder) {
         try {
@@ -192,7 +227,6 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         this.detectOrClassify = detectOrClassify;
         this.mClassifyDLManager = mClassifyDLManager;
         this.mInferManager = mInferManager;
-        Log.e("tips", "modelHasPrepared");
     }
 
     Camera.PictureCallback myJpegCallback = new Camera.PictureCallback() {
@@ -279,8 +313,10 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         camera.setPreviewCallbackWithBuffer(PhotoModuleImpl.this);
         camera.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
         camera.setPreviewCallback(PhotoModuleImpl.this);
-        width_param = surfaceWidth / camWidth;
-        height_param = surfaceHeight / camHeight;
+//        width_param = surfaceWidth / camWidth;
+//        height_param = surfaceHeight / camHeight;
+        width_param = 1;
+        height_param = 1;
     }
 
     public void onDetectBitmap(Bitmap bitmap, float confidence) {
@@ -289,9 +325,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
             if (modelList.size() > 0) {
                 Log.e("ListSize", String.valueOf(modelList.size()));
             }
-            drawBoundingBox(modelList);
-
-
+            drawRectView(modelList, bitmap);
         } catch (BaseException e) {
             Log.e("BaseException", e.toString());
         }
@@ -338,9 +372,65 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         }
     }
 
+    Canvas canvas = new Canvas();
+    Paint paint = new Paint();
+
+    {
+        paint.setAntiAlias(true);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.GREEN);
+        paint.setStrokeWidth(10);   // 画笔粗度
+    }
+
+    Paint paintText = new Paint();
+
+    {
+        paintText.setTextSize(40);
+        paintText.setColor(Color.BLUE);
+        paintText.setTextAlign(Paint.Align.LEFT);
+    }
+
+    private void drawRectView(List<DetectionResultModel> listD, Bitmap bitmap) {
+        final Bitmap mbitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        canvas.setBitmap(mbitmap);
+        for (DetectionResultModel dr : listD) {
+
+            Rect rec = dr.getBounds();
+            if (rec.left < 0) {
+                rec.left = 0;
+            }
+            if (rec.right < 0) {
+                rec.right = 0;
+            }
+            if (rec.top < 0) {
+                rec.top = 0;
+            }
+            if (rec.bottom < 0) {
+                rec.bottom = 0;
+            }
+            rec.left = (int) (rec.left * width_param);
+            rec.top = (int) (rec.top * height_param);
+            rec.right = (int) (rec.right * width_param);
+            rec.bottom = (int) (rec.bottom * height_param);
+//            paint.setStyle(Paint.Style.FILL_AND_STROKE);
+            canvas.drawRect(rec, paint);
+            canvas.drawText(dr.getLabel(), rec.left, rec.top+30, paintText);
+        }
+        canvas.save();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                drawView.setImageBitmap(mbitmap);
+            }
+        });
+
+
+    }
+
 
     private void drawBoundingBox(List<DetectionResultModel> listD) {
-        Canvas canvas = drawRectHolder.lockCanvas(null);
+        canvas = drawRectHolder.lockCanvas(null);
         if (canvas == null) return;
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -348,7 +438,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         for (DetectionResultModel dr : listD) {
             paint.setStyle(Paint.Style.STROKE);
             paint.setColor(Color.GREEN);
-            paint.setStrokeWidth(10);   // 画笔粗度
+            paint.setStrokeWidth(5);   // 画笔粗度
             Rect rec = dr.getBounds();
             if (rec.left < 0) {
                 rec.left = rec.left + camWidth;
@@ -377,7 +467,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
 }
 
 class CalTaskThreadExecutor {
-    private static final ExecutorService instance = new ThreadPoolExecutor(3, 10,
+    private static final ExecutorService instance = new ThreadPoolExecutor(1, 1,
             0L, TimeUnit.MILLISECONDS,
             new LinkedBlockingDeque<Runnable>(2),
             new ThreadFactory() {

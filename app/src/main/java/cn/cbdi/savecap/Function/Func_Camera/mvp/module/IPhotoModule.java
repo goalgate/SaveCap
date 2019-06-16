@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.ImageView;
 
 import com.baidu.ai.edge.core.classify.ClassifyInterface;
 import com.baidu.ai.edge.core.infer.InferInterface;
@@ -19,6 +20,9 @@ public interface IPhotoModule {
     void Init(SurfaceView surfaceView, IOnSetListener listener);
 
     void Init(SurfaceView surfaceView, SurfaceView drawRectView, IOnSetListener listener);
+
+    void Init(SurfaceView surfaceView, ImageView drawView, IOnSetListener listener);
+
 
     void setDisplay(SurfaceHolder sHolder);
 

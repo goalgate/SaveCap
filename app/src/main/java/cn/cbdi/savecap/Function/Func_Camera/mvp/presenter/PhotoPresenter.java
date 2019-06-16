@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.ImageView;
 
 import com.baidu.ai.edge.core.classify.ClassifyInterface;
 import com.baidu.ai.edge.core.infer.InferInterface;
@@ -43,6 +44,20 @@ public class PhotoPresenter {
     public void init(SurfaceView surfaceView) {
         try {
             photoModule.Init(surfaceView,new IPhotoModule.IOnSetListener() {
+                        @Override
+                        public void onPhotoBack(String msg, Bitmap bitmap) {
+                            view.onPhotoBack(msg, bitmap);
+                        }
+                    }
+            );
+        } catch (NullPointerException e) {
+            Log.e("initCamera", e.toString());
+        }
+    }
+
+    public void init(SurfaceView surfaceView,ImageView drawView) {
+        try {
+            photoModule.Init(surfaceView,drawView, new IPhotoModule.IOnSetListener() {
                         @Override
                         public void onPhotoBack(String msg, Bitmap bitmap) {
                             view.onPhotoBack(msg, bitmap);
