@@ -45,6 +45,7 @@ import com.baidu.ai.edge.core.snpe.SnpeConfig;
 import com.baidu.ai.edge.core.snpe.SnpeManager;
 import com.baidu.ai.edge.core.util.Util;
 import com.baidu.ai.edge.ui.activity.ResultListener;
+import com.baidu.ai.edge.ui.util.ThreadPoolManager;
 import com.baidu.ai.edge.ui.view.model.DetectResultModel;
 import com.blankj.utilcode.util.ToastUtils;
 
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -322,28 +324,10 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
     public void onDetectBitmap(Bitmap bitmap, float confidence) {
         try {
             List<DetectionResultModel> modelList = mInferManager.detect(bitmap, confidence);
-            if (modelList.size() > 0) {
-                Log.e("ListSize", String.valueOf(modelList.size()));
-            }
             drawRectView(modelList, bitmap);
         } catch (BaseException e) {
             Log.e("BaseException", e.toString());
         }
-    }
-
-    private List<DetectResultModel> fillDetectionResultModel(
-            List<DetectionResultModel> modelList) {
-        List<DetectResultModel> results = new ArrayList<>();
-        for (int i = 0; i < modelList.size(); i++) {
-            DetectionResultModel mDetectionResultModel = modelList.get(i);
-            DetectResultModel mDetectResultModel = new DetectResultModel();
-            mDetectResultModel.setIndex(i + 1);
-            mDetectResultModel.setConfidence(mDetectionResultModel.getConfidence());
-            mDetectResultModel.setName(mDetectionResultModel.getLabel());
-            mDetectResultModel.setBounds(mDetectionResultModel.getBounds());
-            results.add(mDetectResultModel);
-        }
-        return results;
     }
 
     public void onClassifyBitmap(Bitmap bitmap, float confidence) {
@@ -374,7 +358,6 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
 
     Canvas canvas = new Canvas();
     Paint paint = new Paint();
-
     {
         paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.STROKE);
@@ -383,7 +366,6 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
     }
 
     Paint paintText = new Paint();
-
     {
         paintText.setTextSize(40);
         paintText.setColor(Color.BLUE);
@@ -395,7 +377,6 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         canvas.setBitmap(mbitmap);
         for (DetectionResultModel dr : listD) {
-
             Rect rec = dr.getBounds();
             if (rec.left < 0) {
                 rec.left = 0;
@@ -413,9 +394,8 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
             rec.top = (int) (rec.top * height_param);
             rec.right = (int) (rec.right * width_param);
             rec.bottom = (int) (rec.bottom * height_param);
-//            paint.setStyle(Paint.Style.FILL_AND_STROKE);
             canvas.drawRect(rec, paint);
-            canvas.drawText(dr.getLabel(), rec.left, rec.top+30, paintText);
+            canvas.drawText(dr.getLabel(), rec.left, rec.top + 30, paintText);
         }
         canvas.save();
         handler.post(new Runnable() {
@@ -424,8 +404,6 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
                 drawView.setImageBitmap(mbitmap);
             }
         });
-
-
     }
 
 
@@ -467,20 +445,12 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
 }
 
 class CalTaskThreadExecutor {
-    private static final ExecutorService instance = new ThreadPoolExecutor(1, 1,
+    private static ExecutorService instance = new ThreadPoolExecutor(1, 1,
             0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingDeque<Runnable>(2),
-            new ThreadFactory() {
-                private final AtomicInteger mCount = new AtomicInteger(1);
-
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, "SingleTaskPoolThread #" + mCount.getAndIncrement());
-                }
-            },
+            new SynchronousQueue<Runnable>(),
             new RejectedExecutionHandler() {
                 @Override
                 public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                    Log.e("TAG", "超了");
                     executor.remove(r);
                 }
             });
