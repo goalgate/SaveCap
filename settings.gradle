@@ -1,1 +1,1 @@
-include ':app', ':camera_ui'
+include ':app', ':camera_ui', ':facelibrary'

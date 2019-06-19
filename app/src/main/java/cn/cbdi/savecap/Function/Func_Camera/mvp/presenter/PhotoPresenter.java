@@ -110,6 +110,12 @@ public class PhotoPresenter {
         } catch (NullPointerException e) {
             Log.e("getOneShut", e.toString());
         }
-
     }
+    public void onActivityDestroy(){
+        try {
+            photoModule.onActivityDestroy();
+        } catch (NullPointerException e) {
+            Log.e("getOneShut", e.toString());
+        }    }
 }
+

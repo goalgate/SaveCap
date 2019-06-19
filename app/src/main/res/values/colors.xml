@@ -8,5 +8,6 @@
 
     <color name="grgray">#686868</color>
     <color name="primary_text">#212121</color>
+    <color name="primary_light">#CFD8DC</color>
 
 </resources>

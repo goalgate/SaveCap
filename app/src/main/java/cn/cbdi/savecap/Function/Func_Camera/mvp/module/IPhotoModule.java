@@ -23,7 +23,6 @@ public interface IPhotoModule {
 
     void Init(SurfaceView surfaceView, ImageView drawView, IOnSetListener listener);
 
-
     void setDisplay(SurfaceHolder sHolder);
 
     void capture();
@@ -32,7 +31,7 @@ public interface IPhotoModule {
 
     void modelPrepare(boolean status, int detectOrClassify, ClassifyInterface mClassifyDLManager, InferInterface mInferManager);
 
-
+    void onActivityDestroy();
     interface IOnSetListener {
         void onPhotoBack(String msg, Bitmap bitmap);
 

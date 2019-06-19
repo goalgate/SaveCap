@@ -102,9 +102,9 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
 
     int width, height;
 
-    int camWidth = 800;
+    int camWidth = 1280;
 
-    int camHeight = 600;
+    int camHeight = 720;
 
     private int surfaceWidth;
 
@@ -114,13 +114,15 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
 
     float height_param;
 
-    private static final String TAG = PhotoModuleImpl.class.getSimpleName();
+    boolean camera_running = false;
 
+    private static final String TAG = PhotoModuleImpl.class.getSimpleName();
 
     @Override
     public void Init(SurfaceView surfaceView, IOnSetListener listener) {
         this.callback = listener;
         this.cameraHolder = surfaceView.getHolder();
+        surfaceView.setScaleX(-1);
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -137,6 +139,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
             @Override
             public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
                 releaseCamera();
+                camera_running = false;
 
             }
         });
@@ -148,6 +151,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         this.callback = listener;
         this.cameraHolder = surfaceView.getHolder();
         this.drawRectHolder = drawRectView.getHolder();
+
         this.cameraHolder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -204,6 +208,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
             if (camera != null) {
                 camera.setPreviewDisplay(sHolder);
                 camera.startPreview();
+                camera_running = true;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -231,6 +236,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         this.mInferManager = mInferManager;
     }
 
+
     Camera.PictureCallback myJpegCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, final Camera camera) {
@@ -255,6 +261,10 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
             camera.stopPreview();
             camera.release();
             camera = null;
+
+        }
+        if (drawView != null) {
+            drawView = null;
         }
     }
 
@@ -285,6 +295,34 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
                 });
     }
 
+    @Override
+    public void onActivityDestroy() {
+        releaseEasyDL();
+    }
+
+    private void releaseEasyDL() {
+        if (detectOrClassify == MODEL_DETECT) {
+            if (mInferManager != null) {
+                try {
+                    mInferManager.destroy();
+                } catch (BaseException e) {
+                    Log.e("BaseException", e.toString());
+                }
+            }
+        }
+        if (detectOrClassify == MODEL_CLASSIFY) {
+            if (mClassifyDLManager != null) {
+                try {
+                    mClassifyDLManager.destroy();
+                } catch (ClassifyException e) {
+                    Log.e("BaseException", e.toString());
+                } catch (BaseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 
     @Override
     public void onPreviewFrame(final byte[] data, Camera camera) {
@@ -293,11 +331,14 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
             @Override
             public void run() {
                 if (modelLoadStatus) {
-                    if (detectOrClassify == MODEL_DETECT) {
-                        onDetectBitmap(convertPreviewDataToBitmap(data), mConfidence);
-                    } else if (detectOrClassify == MODEL_CLASSIFY) {
-                        onClassifyBitmap(convertPreviewDataToBitmap(data), mConfidence);
+                    if (camera_running) {
+                        if (detectOrClassify == MODEL_DETECT) {
+                            onDetectBitmap(convertPreviewDataToBitmap(data), mConfidence);
+                        } else if (detectOrClassify == MODEL_CLASSIFY) {
+                            onClassifyBitmap(convertPreviewDataToBitmap(data), mConfidence);
+                        }
                     }
+
                 }
             }
         });
@@ -324,6 +365,9 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
     public void onDetectBitmap(Bitmap bitmap, float confidence) {
         try {
             List<DetectionResultModel> modelList = mInferManager.detect(bitmap, confidence);
+            if (modelList.size() > 0) {
+                Log.e("ListSize", String.valueOf(modelList.size()));
+            }
             drawRectView(modelList, bitmap);
         } catch (BaseException e) {
             Log.e("BaseException", e.toString());
@@ -358,6 +402,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
 
     Canvas canvas = new Canvas();
     Paint paint = new Paint();
+
     {
         paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.STROKE);
@@ -366,6 +411,7 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
     }
 
     Paint paintText = new Paint();
+
     {
         paintText.setTextSize(40);
         paintText.setColor(Color.BLUE);
@@ -378,16 +424,16 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         canvas.setBitmap(mbitmap);
         for (DetectionResultModel dr : listD) {
             Rect rec = dr.getBounds();
-            if (rec.left < 0) {
+            if (rec.left > -10 && rec.left < 0) {
                 rec.left = 0;
             }
-            if (rec.right < 0) {
+            if (rec.right > -10 && rec.right < 0) {
                 rec.right = 0;
             }
-            if (rec.top < 0) {
+            if (rec.top > -10 && rec.top < 0) {
                 rec.top = 0;
             }
-            if (rec.bottom < 0) {
+            if (rec.bottom > -10 && rec.bottom < 0) {
                 rec.bottom = 0;
             }
             rec.left = (int) (rec.left * width_param);
@@ -401,7 +447,9 @@ public class PhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                drawView.setImageBitmap(mbitmap);
+                if(drawView!=null){
+                    drawView.setImageBitmap(mbitmap);
+                }
             }
         });
     }

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.text.Layout;
 
 import com.baidu.ai.edge.core.util.FileUtil;
 
@@ -96,7 +95,7 @@ public class SplashActivity extends Activity {
     }
 
     private void startUICameraActivity() {
-        Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+        Intent intent = new Intent(SplashActivity.this, AnalysisActivity.class);
         intent.putExtra("name", name);
         intent.putExtra("model_type", type);
 
